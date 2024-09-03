@@ -20,28 +20,26 @@ def format_bounds(bounds):
 
 def markup(coords,image):
     """ Takes a list of coordinates cooresponding to the bounds of each leaf node and uses them to draw rectangles around each GUI feature. The new image is then saved in a new folder titled 'marked_pngs' with 'marked_' in front of the image name """
-    
-    img= Image.open(image)
-    draw= ImageDraw.Draw(img) 
+
+    png= Image.open(image)
+    draw= ImageDraw.Draw(png) 
     for element in coords:
         draw.rectangle(element,outline='yellow',width=10)
     if  not os.path.exists('marked_pngs'):
         os.makedirs('marked_pngs')
-    img.save(os.path.join('marked_pngs','marked_'+image))
+    png.save(os.path.join('marked_pngs','marked_'+image))
 
 
 
 
 def get_bounds(nodes):
     """ Retrieves the bounds of each leaf node """
+
     bounds=[]
+    count=0
     for i in nodes:
         if len(i)==0:
             bounds.append(format_bounds(i.attrs['bounds']))
-        # if len(i)>0:
-        #     for j in str(i).split('\n'):
-        #         if j[-2:]=='/>':
-        #             print(j)
     return bounds
 
 def read_files(folder):
@@ -52,13 +50,12 @@ def read_files(folder):
            
             image_path=os.path.splitext(file)[0] + '.png'
             try:
-                send=open(file, "r")
-                contents=send.read()
+                xml_file=open(file, "r")
+                data=xml_file.read()
                 
-                soup=BeautifulSoup(contents,'xml')
+                soup=BeautifulSoup(data,'xml')
                 
                 nodes=soup.find_all('node')
-                
                 bounds=get_bounds(nodes)
     
                 markup(bounds,image_path)
