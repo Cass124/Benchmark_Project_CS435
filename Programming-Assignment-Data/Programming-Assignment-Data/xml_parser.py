@@ -1,61 +1,70 @@
-import xml.etree.ElementTree as ET 
-from lxml import etree
 from PIL import Image
 from PIL import ImageDraw
 import os
-
-def find_leaf_bounds(node,image_path):
-        if len(node) ==0:
-            # print(f"Leaf Node: resource-id={node.attrib.get('resource-id')} text={node.attrib.get('text')} bounds={node.attrib.get('bounds')}")
-            bounds=node.attrib.get('bounds')
-            
-            bounds=bounds.replace('[','(').replace(']',')').split(')(')
-            top= bounds[0].replace('(','').split(',')
-            bttm= bounds[1].replace(')','').split(',')
-            tx,ty=int(top[0]), int(top[1])
-            bx,by=int(bttm[0]), int(bttm[1])
-            print(tx,ty,bx,by)
-            pic(tx,ty,bx,by,image_path)
-            # print('BOUNDS:', bounds, type(bounds))
-            return bounds
-        else:
-            for child in node:
-                    find_leaf_bounds(child,image_path)
+from bs4 import BeautifulSoup
 
 
+
+def format_bounds(bounds):
+    """ Extracts the individual coordinates for the bounds of the node and formats them into a list containing the top x, top y, bottom x, and bottom y coordinates """
+    
+    bounds=bounds.split('][')
+    top= bounds[0].replace('[','').split(',')
+    bttm= bounds[1].replace(']','').split(',')
+    tx,ty=int(top[0]), int(top[1])
+    bx,by=int(bttm[0]), int(bttm[1])
+    coords=[tx,ty,bx,by]
+    return coords
+
+
+
+def markup(coords,image):
+    """ Takes a list of coordinates cooresponding to the bounds of each leaf node and uses them to draw rectangles around each GUI feature. The new image is then saved in a new folder titled 'marked_pngs' with 'marked_' in front of the image name """
+    
+    img= Image.open(image)
+    draw= ImageDraw.Draw(img) 
+    for element in coords:
+        draw.rectangle(element,outline='yellow',width=10)
+    if  not os.path.exists('marked_pngs'):
+        os.makedirs('marked_pngs')
+    img.save(os.path.join('marked_pngs','marked_'+image))
+
+
+
+
+def get_bounds(nodes):
+    """ Retrieves the bounds of each leaf node """
+    bounds=[]
+    for i in nodes:
+        if len(i)==0:
+            bounds.append(format_bounds(i.attrs['bounds']))
+        # if len(i)>0:
+        #     for j in str(i).split('\n'):
+        #         if j[-2:]=='/>':
+        #             print(j)
+    return bounds
 
 def read_files(folder):
+    """ Reads all the files in the current directory and sends all files with the 'xml' extension to the get_bounds function. Cooreseponding 'png' files are passed with the extracted bounds to the markup function. """
+
     for file in os.listdir(folder):
         if file.endswith('xml'):
-            print("\nFILENAME:",os.path.splitext(file)[0],'\n')
-            image_path=os.path.splitext(file)[0]
+           
+            image_path=os.path.splitext(file)[0] + '.png'
             try:
-                tree= ET.parse(file)
-                root=tree.getroot()
-                find_leaf_bounds(root,image_path)
+                send=open(file, "r")
+                contents=send.read()
                 
+                soup=BeautifulSoup(contents,'xml')
+                
+                nodes=soup.find_all('node')
+                
+                bounds=get_bounds(nodes)
+    
+                markup(bounds,image_path)
             except:
                 print(file, 'threw an exception\n\n')
 
-def pic(tx,ty,bx,by,image):
-    img= Image.open(image)
-    draw= ImageDraw.Draw(img)
-    # image_width, image_height=img.size
-    # top_left_x = (image_width - 100) // 2
-    # top_left_y = (image_height - 50) // 2
-    # bottom_right_x = top_left_x + 100
-    # bottom_right_y = top_left_y + 50
-    
-    # Draw the rectangle
-    # draw.rectangle([top_left_x, top_left_y, bottom_right_x, bottom_right_y], outline='yellow', fill='yellow')
-    draw.rectangle([tx,ty,bx,by],outline='yellow',fill='yellow')
-    img.show()
-
-
-
 if __name__ == "__main__":
-    tree= ET.parse('com.giphy.messenger-1.xml')
-    root=tree.getroot()
-    find_leaf_bounds(root,'com.giphy.messenger-1.png')
-    # read_files(os.getcwd())
-    # pic()
+    
+    read_files(os.getcwd())
