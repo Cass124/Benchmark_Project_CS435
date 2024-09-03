@@ -33,7 +33,7 @@ def markup(coords,image):
 
 
 def get_bounds(nodes):
-    """ Retrieves the bounds of each leaf node """
+    """ Retrieves the bounds of each leaf node. Leaf nodes are determined by the length of the element within the find_all() results, with a length of 0 indicating that a node has no children. """
 
     bounds=[]
     count=0

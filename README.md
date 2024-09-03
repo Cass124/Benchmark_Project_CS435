@@ -2,7 +2,7 @@
 
 ## GUI Parser and Highlighter
 
-This program takes pairs of xml and png and returns a folder containing new png files with all leaf level GUI components highlighted in yellow. 
+This program takes pairs of xml and png files and returns a folder containing new png files with all leaf level GUI components highlighted in yellow. 
 
 
 ## Setup and Running
